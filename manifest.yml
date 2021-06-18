@@ -1,0 +1,5 @@
+dependencies:
+  # These gets installed from https://pypi.org
+  python:
+    - fuzzywuzzy[speedup] # https://pypi.org/project/fuzzywuzzy/, for fuzzy pattern matching
+    - beautifulsoup4 # Extracting text from messages
