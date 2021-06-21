@@ -92,7 +92,7 @@ class UbuMessagesSkill(MycroftSkill):
             bests_list = [x[0] for x in bests]
             self.select_person(person, bests_list, id_person, False)
 
-    def send_message(self, person_id, from_conversations):
+    def send_message_final(self, person_id, from_conversations):
         message = self.get_response("Dime el mensaje")
         yn = self.ask_yesno("He entendido " + message + "¿Es correcto?")
         if yn != "no":
