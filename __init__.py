@@ -78,6 +78,8 @@ class UbuMessagesSkill(MycroftSkill):
                 if from_conversations:
                     self.message_from_courses(person)
                 return
+            if yn == None:
+                return
         self.send_message_final(person_id[person_list[0]], from_conversations)
     
     def message_from_courses(self, person):
@@ -99,7 +101,7 @@ class UbuMessagesSkill(MycroftSkill):
     def send_message_final(self, person_id, from_conversations):
         message = self.get_response("Dime el mensaje")
         yn = self.ask_yesno("He entendido " + message + "¿Es correcto?")
-        if yn != "no":
+        if yn == "yes":
             if from_conversations:
                 self.ws.send_message_to_conversation(message, person_id)
             else:
