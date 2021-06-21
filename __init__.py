@@ -74,7 +74,7 @@ class UbuMessagesSkill(MycroftSkill):
                 if from_conversations:
                     self.message_from_courses(person)
                 return
-        self.send_message(person_id[person_list[0]])
+        self.send_message_final(person_id[person_list[0]])
     
     def message_from_courses(self, person):
         course = self.get_response("¿A qué curso va esa persona?")
