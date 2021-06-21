@@ -67,14 +67,14 @@ class UbuMessagesSkill(MycroftSkill):
                     self.message_from_courses(person)
                 return
             else:
-                bests_list = [sel]
+                person_list = [sel]
         else:
             yn = self.ask_yesno("He encontrado a " + person_list[0] + ". ¿Es correcto?")
             if yn == "no":
                 if from_conversations:
                     self.message_from_courses(person)
                 return
-        self.send_message(person_id[bests_list[0]])
+        self.send_message(person_id[person_list[0]])
     
     def message_from_courses(self, person):
         course = self.get_response("¿A qué curso va esa persona?")
