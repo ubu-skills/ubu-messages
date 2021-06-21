@@ -34,8 +34,9 @@ class UbuMessagesSkill(MycroftSkill):
         l = sorted(l, reverse=True)
         print(msg_from, messages)
         for n, m in enumerate(l):
-            self.speak(msg_from[m] + " dice: " + messages[m].get_clean_text())
-            wait_while_speaking()
+            if m in messages:
+                self.speak(msg_from[m] + " dice: " + messages[m].get_clean_text())
+                wait_while_speaking()
             if n == 4 or self.request_stop:
                 break
 
