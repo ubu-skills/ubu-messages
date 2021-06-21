@@ -100,6 +100,7 @@ class UbuMessagesSkill(MycroftSkill):
                 self.ws.send_message_to_conversation(message, person_id)
             else:
                 self.ws.send_message_to_user(message, person_id)
+            self.speak("Okay, he enviado el mensaje")
 
     def stop(self):
         self.request_stop = True
