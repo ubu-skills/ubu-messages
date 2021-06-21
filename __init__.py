@@ -24,12 +24,10 @@ class UbuMessagesSkill(MycroftSkill):
         messages = {}
         msg_from = {}
         user_id = self.ws.get_user().get_id()
-        print("Userid", user_id, type(user_id))
         for conver in convers:
             messages.update(conver.get_messages())
             for m in conver.get_messages().values():
-                print(m.get_useridfrom(), type(m.get_useridfrom()))
-                if m.get_useridfrom() != user_id:
+                if str(m.get_useridfrom()) != str(user_id):
                     msg_from[m.get_message_id()] = util.reorder_name(list(
                         conver.get_members().values())[0].get_fullname())
         l = messages.keys()
