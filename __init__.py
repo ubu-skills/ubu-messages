@@ -23,11 +23,13 @@ class UbuMessagesSkill(MycroftSkill):
         convers = self.ws.get_conversations_with_messages()
         messages = {}
         msg_from = {}
+        user_id = self.ws.get_user().get_id()
         for conver in convers:
             messages.update(conver.get_messages())
             for m in conver.get_messages().values():
-                msg_from[m.get_message_id()] = util.reorder_name(
-                    list(conver.get_members().values())[0].get_fullname())
+                if m.get_useridfrom() != user_id:
+                    msg_from[m.get_message_id()] = util.reorder_name(list(
+                        conver.get_members().values())[0].get_fullname())
         l = messages.keys()
         l = sorted(l, reverse=True)
         for n, m in enumerate(l):
