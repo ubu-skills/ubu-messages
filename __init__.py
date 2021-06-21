@@ -32,6 +32,7 @@ class UbuMessagesSkill(MycroftSkill):
                         conver.get_members().values())[0].get_fullname())
         l = messages.keys()
         l = sorted(l, reverse=True)
+        print(msg_from, messages)
         for n, m in enumerate(l):
             self.speak(msg_from[m] + " dice: " + messages[m].get_clean_text())
             wait_while_speaking()
