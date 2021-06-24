@@ -19,7 +19,7 @@ class UbuMessagesSkill(MycroftSkill):
     @intent_handler(IntentBuilder("UnreadMessagesIntent").require("UnreadMessagesVoc"))
     def recent_messages(self, message):
         self.request_stop = False
-        self.speak("Dame un momento, por favor")
+        self.speak_dialog("wait.dialog")
         convers = self.ws.get_conversations_with_messages()
         messages = {}
         msg_from = {}
@@ -35,12 +35,15 @@ class UbuMessagesSkill(MycroftSkill):
         print(msg_from, messages)
         for n, m in enumerate(l):
             if m in msg_from:
-                self.speak(msg_from[m] + " dice: " + messages[m].get_clean_text())
+                self.speak_dialog("says.dialog", data={
+                    "person": msg_from[m],
+                    "message": messages[m].get_clean_text()
+                })
                 wait_while_speaking()
             if n == 4 or self.request_stop:
                 break
 
-    @intent_handler(IntentBuilder("SendMessage").require("EnviarAPersona"))
+    @intent_handler(IntentBuilder("SendMessagePerson").require("EnviarAPersona"))
     def send_message(self, message):
         persona = message.data.get("EnviarAPersona")
         convers = self.ws.get_conversations()
@@ -54,26 +57,26 @@ class UbuMessagesSkill(MycroftSkill):
 
     def select_person(self, person, person_list, person_id, from_conversations):
         if len(person_list) == 0:
-            self.speak("No he encontrado a nadie")
+            self.speak_dialog("nobody.found.dialog")
             wait_while_speaking()
             if from_conversations:
                 self.message_from_courses(person)
             return
         if len(person_list) > 1:
-            person_list.append("No está en la lista") # self.translate?
-            self.speak("Hay varias posibles coincidencias:")
+            person_list.append(self.translate("not.on.list.dialog"))
+            self.speak_dialog("multiple.matching.dialog")
             wait_while_speaking()
             sel = self.ask_selection(person_list, numeric=True)
             if sel is None:
                 return
-            if sel == "No está en la lista":
+            if sel == self.translate("not.on.list.dialog"):
                 if from_conversations:
                     self.message_from_courses(person)
                 return
             else:
                 person_list = [sel]
         else:
-            yn = self.ask_yesno("He encontrado a " + person_list[0] + ". ¿Es correcto?")
+            yn = self.ask_yesno("found.one.okay.dialog", data={"person": person_list[0]})
             if yn == "no":
                 if from_conversations:
                     self.message_from_courses(person)
@@ -83,7 +86,7 @@ class UbuMessagesSkill(MycroftSkill):
         self.send_message_final(person_id[person_list[0]], from_conversations)
     
     def message_from_courses(self, person):
-        course = self.get_response("¿A qué curso va esa persona?")
+        course = self.get_response("which.course.dialog")
         courses = self.ws.get_user_courses()
         course_names = {}
         for c in courses:
@@ -99,14 +102,14 @@ class UbuMessagesSkill(MycroftSkill):
             self.select_person(person, bests_list, id_person, False)
 
     def send_message_final(self, person_id, from_conversations):
-        message = self.get_response("Dime el mensaje")
-        yn = self.ask_yesno("He entendido " + message + "¿Es correcto?")
+        message = self.get_response("say.message.dialog")
+        yn = self.ask_yesno("did.i.understood.correctly.dialog", data={"message": message})
         if yn == "yes":
             if from_conversations:
                 self.ws.send_message_to_conversation(message, person_id)
             else:
                 self.ws.send_message_to_user(message, person_id)
-            self.speak("Okay, he enviado el mensaje")
+            self.speak_dialog("sent.dialog")
 
     def stop(self):
         self.request_stop = True

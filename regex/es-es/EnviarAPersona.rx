@@ -1,3 +1,4 @@
 .*enviar mensaje a (?P<EnviarAPersona>.*)
 .*enviar un mensaje a (?P<EnviarAPersona>.*)
 .*envía un mensaje a (?P<EnviarAPersona>.*)
+.* envía mensaje a (?P<EnviarAPersona>.*)
