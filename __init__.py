@@ -74,6 +74,7 @@ class UbuMessagesSkill(MycroftSkill):
                     self.message_from_courses(person)
                 return
             else:
+                self.speak("sel")
                 person_list = [sel]
         else:
             yn = self.ask_yesno("found.one.okay", data={"person": person_list[0]})
