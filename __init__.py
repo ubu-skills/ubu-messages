@@ -1,3 +1,5 @@
+"""Module for ubu-messages skill
+"""
 import sys
 from adapt.intent import IntentBuilder
 from mycroft import MycroftSkill, intent_handler  # type: ignore
@@ -8,54 +10,78 @@ from UBUVoiceAssistant.util import util  # type: ignore
 
 
 class UbuMessagesSkill(MycroftSkill):
+    """Class for the ubu-messages skill"""
 
     def __init__(self):
         super().__init__()
         self.request_stop = False
+        self.webservice = None
 
     def initialize(self):
-        self.ws = util.get_data_from_server()
+        """Gets the initial information for the skill
+        """
+        self.webservice = util.get_data_from_server()
 
     @intent_handler(IntentBuilder("UnreadMessagesIntent").require("UnreadMessagesVoc"))
-    def recent_messages(self, message):
+    def recent_messages(self, _):
+        """Reads the most recent messages
+
+        Args:
+            message: Mycroft message data
+        """
         self.request_stop = False
         self.speak_dialog("wait")
-        convers = self.ws.get_conversations_with_messages()
+        convers = self.webservice.get_conversations_with_messages()
         messages = {}
         msg_from = {}
-        user_id = self.ws.get_user().get_id()
+        user_id = self.webservice.get_user().get_id()
         for conver in convers:
             messages.update(conver.get_messages())
-            for m in conver.get_messages().values():
-                if str(m.get_useridfrom()) != str(user_id):
-                    msg_from[m.get_message_id()] = util.reorder_name(list(
+            for msg in conver.get_messages().values():
+                if str(msg.get_useridfrom()) != str(user_id):
+                    msg_from[msg.get_message_id()] = util.reorder_name(list(
                         conver.get_members().values())[0].get_fullname())
-        l = messages.keys()
-        l = sorted(l, reverse=True)
+        messagelist = messages.keys()
+        messagelist = sorted(messagelist, reverse=True)
         print(msg_from, messages)
-        for n, m in enumerate(l):
-            if m in msg_from:
+        for num, msg in enumerate(messagelist):
+            if msg in msg_from:
                 self.speak_dialog("says", data={
-                    "person": msg_from[m],
-                    "message": messages[m].get_clean_text()
+                    "person": msg_from[msg],
+                    "message": messages[msg].get_clean_text()
                 })
                 wait_while_speaking()
-            if n == 4 or self.request_stop:
+            if num == 4 or self.request_stop:
                 break
 
     @intent_handler(IntentBuilder("SendMessagePerson").require("EnviarAPersona"))
     def send_message(self, message):
+        """The entry point for sending message to a person
+
+        Args:
+            message: Mycroft message data
+        """
         persona = message.data.get("EnviarAPersona")
-        convers = self.ws.get_conversations()
+        convers = self.webservice.get_conversations()
         id_convers = {}
         for conver in convers:
             id_convers[util.reorder_name(list(conver.get_members().values())[
                                          0].get_fullname()).lower()] = conver.get_conversation_id()
-        bests = process.extractBests(persona, list(id_convers.keys()), scorer=fuzz.partial_ratio, score_cutoff=75)
+        bests = process.extractBests(persona, list(
+            id_convers.keys()), scorer=fuzz.partial_ratio, score_cutoff=75)
         bests_list = [x[0] for x in bests]
         self.select_person(persona, bests_list, id_convers, True)
 
     def select_person(self, person, person_list, person_id, from_conversations):
+        """Prompts the user to select a person from the list
+
+        Args:
+            person (str): The name of the person received when launching the skill
+            person_list (list[str]): list of similar persons found
+            person_id (dict[str, int]): Correspondence between the person's name and the Moodle ID
+            from_conversations (bool): True if we are selecting from the list of conversations,
+                false if not.
+        """
         if len(person_list) == 0:
             self.speak_dialog("nobody.found")
             wait_while_speaking()
@@ -73,49 +99,71 @@ class UbuMessagesSkill(MycroftSkill):
                 if from_conversations:
                     self.message_from_courses(person)
                 return
-            else:
-                self.speak(sel)
-                wait_while_speaking()
-                person_list = [sel]
+            self.speak(sel)
+            wait_while_speaking()
+            person_list = [sel]
         else:
-            yn = self.ask_yesno("found.one.okay", data={"person": person_list[0]})
-            if yn == "no":
+            yesno = self.ask_yesno("found.one.okay", data={
+                                "person": person_list[0]})
+            if yesno == "no":
                 if from_conversations:
                     self.message_from_courses(person)
                 return
-            if yn == None:
+            if yesno is None:
                 return
         self.send_message_final(person_id[person_list[0]], from_conversations)
-    
+
     def message_from_courses(self, person):
-        course = self.get_response("which.course")
-        courses = self.ws.get_user_courses()
+        """Searchs for users matching the name in a course
+
+        Args:
+            person (str): The name of the person we get when launching the skill
+        """
+        course_name = self.get_response("which.course")
+        courses = self.webservice.get_user_courses()
         course_names = {}
-        for c in courses:
-            course_names[c.get_id()] = c.get_name()
-        best_course = process.extractOne(course, course_names, scorer=fuzz.partial_ratio, score_cutoff=75)
+        for course in courses:
+            course_names[course.get_id()] = course.get_name()
+        best_course = process.extractOne(
+            course_name, course_names, scorer=fuzz.partial_ratio, score_cutoff=75)
         if best_course is not None:
-            participants = self.ws.get_participants_by_course(best_course)
+            participants = self.webservice.get_participants_by_course(best_course)
             id_person = {}
-            for p in participants:
-                id_person[util.reorder_name(p.get_fullname())] = p.get_id()
-            bests = process.extractBests(person, list(id_person.keys()), scorer=fuzz.partial_ratio, score_cutoff=75)
+            for participant in participants:
+                id_person[util.reorder_name(participant.get_fullname())] = participant.get_id()
+            bests = process.extractBests(person, list(
+                id_person.keys()), scorer=fuzz.partial_ratio, score_cutoff=75)
             bests_list = [x[0] for x in bests]
             self.select_person(person, bests_list, id_person, False)
 
     def send_message_final(self, person_id, from_conversations):
+        """The final part to send messages
+
+        Args:
+            person_id (int): The person or conversation id
+            from_conversations (bool): True if we need to reply to a conversation,
+                False if we send a message to a new person
+        """
         message = self.get_response("say.message")
-        yn = self.ask_yesno("did.i.understood.correctly", data={"message": message})
-        if yn == "yes":
+        yesno = self.ask_yesno("did.i.understood.correctly",
+                            data={"message": message})
+        if yesno == "yes":
             if from_conversations:
-                self.ws.send_message_to_conversation(message, person_id)
+                self.webservice.send_message_to_conversation(message, person_id)
             else:
-                self.ws.send_message_to_user(message, person_id)
+                self.webservice.send_message_to_user(message, person_id)
             self.speak_dialog("sent")
 
     def stop(self):
+        """Stops the skill
+        """
         self.request_stop = True
 
 
 def create_skill():
+    """Creates the ubu-messages skill
+
+    Returns:
+        UbuMessagesSkill: The Mycroft Skill to interact with Moodle's messages
+    """
     return UbuMessagesSkill()
