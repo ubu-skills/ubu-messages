@@ -42,8 +42,13 @@ class UbuMessagesSkill(MycroftSkill):
                     msg_from[msg.get_message_id()] = util.reorder_name(list(
                         conver.get_members().values())[0].get_fullname())
         messagelist = messages.keys()
+        if len(msg_from) == 0:
+            wait_while_speaking()
+            self.speak_dialog("no.messages")
+            return
         messagelist = sorted(messagelist, reverse=True)
         print(msg_from, messages)
+        wait_while_speaking()
         for num, msg in enumerate(messagelist):
             if msg in msg_from:
                 self.speak_dialog("says", data={
